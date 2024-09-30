@@ -13,6 +13,9 @@ find_package(image_transport REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(message_filters REQUIRED)
+find_package(image_geometry REQUIRED)
+find_package(depth_image_proc REQUIRED)
 
 find_package(rclcpp REQUIRED)
 
@@ -24,6 +27,9 @@ set(dependencies
   image_transport
   cv_bridge
   OpenCV
+  message_filters
+  image_geometry
+  depth_image_proc
   rclcpp
   )
 
@@ -33,6 +39,7 @@ add_library(${PROJECT_NAME} SHARED
   src/follow_with_head/HeadController.cpp
   src/follow_with_head/PID.cpp
   src/follow_with_head/HSVFilter.cpp
+  src/follow_with_head/DepthEstimator.cpp
 )
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
 

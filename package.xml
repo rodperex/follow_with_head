@@ -16,7 +16,12 @@
   <depend>builtin_interfaces</depend>
   <depend>image_transport</depend>
   <depend>cv_bridge</depend>
-
+  <depend>OpenCV</depend>
+  <depend>visualization_msgs</depend>
+  <depend>message_filters</depend>
+  <depend>image_geometry</depend>
+  <depend>depth_image_proc</depend>
+  
   <export>
     <build_type>ament_cmake</build_type>
   </export>

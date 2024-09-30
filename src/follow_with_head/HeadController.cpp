@@ -34,7 +34,7 @@ HeadController::HeadController()
 
   declare_parameter("img_width", img_size_x_);
   declare_parameter("img_height", img_size_y_);
-  
+
   declare_parameter("pan_limit", pan_limit_);
   declare_parameter("tilt_limit", tilt_limit_);
 
@@ -48,7 +48,8 @@ HeadController::HeadController()
   declare_parameter("tilt_pid_max_ref", tilt_pid_params_[1]);
   declare_parameter("tilt_pid_min_output", tilt_pid_params_[2]);
   declare_parameter("tilt_pid_max_output", tilt_pid_params_[3]);
-  tilt_pid_.set_pid(tilt_pid_params_[0], tilt_pid_params_[1], tilt_pid_params_[2], tilt_pid_params_[3]);
+  tilt_pid_.set_pid(tilt_pid_params_[0], tilt_pid_params_[1], tilt_pid_params_[2],
+      tilt_pid_params_[3]);
 
   scaling_x_ = pan_limit_ / (img_size_x_ / 2);
   scaling_y_ = tilt_limit_ / (img_size_y_ / 2);

@@ -15,7 +15,6 @@
 #include <memory>
 
 
-
 #include "follow_with_head/HSVFilter.hpp"
 
 namespace follow_with_head
@@ -32,7 +31,7 @@ HSVFilter::HSVFilter()
   image_pub_ = image_transport::create_publisher(
     this, "output_image", rclcpp::SensorDataQoS().reliable().get_rmw_qos_profile());
   detection_pub_ = create_publisher<vision_msgs::msg::Detection2DArray>(
-    "output_detection_2d", rclcpp::SensorDataQoS().reliable());
+    "detection_2d", rclcpp::SensorDataQoS().reliable());
 
   declare_parameter("min_h", h_);
   declare_parameter("min_s", s_);
