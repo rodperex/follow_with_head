@@ -43,6 +43,13 @@ def generate_launch_description():
         parameters=[param_file],
     )
 
+    depth_cmd = Node(
+        package='follow_with_head',
+        executable='depth_estimator',
+        output='screen',
+        parameters=[param_file],
+    )
+
     ld.add_action(controller_cmd)
     ld.add_action(filter_cmd)
     

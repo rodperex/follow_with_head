@@ -51,10 +51,15 @@ add_executable(hsv_filter src/hsv_filter_main.cpp)
 ament_target_dependencies(hsv_filter ${dependencies})
 target_link_libraries(hsv_filter ${PROJECT_NAME})
 
+add_executable(depth_estimator src/depth_main.cpp)
+ament_target_dependencies(depth_estimator ${dependencies})
+target_link_libraries(depth_estimator ${PROJECT_NAME})
+
 install(TARGETS
   ${PROJECT_NAME}
   head_controller
   hsv_filter
+  depth_estimator
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}

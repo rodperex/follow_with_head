@@ -23,7 +23,7 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 
 DepthEstimator::DepthEstimator()
-: Node("depth_estimator_node")
+: Node("depth_estimator")
 {
   depth_sub_ = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(
     this, "/input_depth", rclcpp::SensorDataQoS().reliable().get_rmw_qos_profile());
