@@ -1,0 +1,25 @@
+hsv_filter:
+  ros__parameters:
+    use_sim_time: false
+    min_h: 0
+    max_h: 29
+    min_s: 141
+    max_s: 255
+    min_v: 182
+    max_v: 255
+
+head_controller:
+  ros__parameters:
+    use_sim_time: false
+    pan_pid_min_ref: 0.0
+    pan_pid_max_ref: 1.0
+    pan_pid_min_output: 0.0
+    pan_pid_max_output: 0.3
+    tilt_pid_min_ref: 0.0
+    tilt_pid_max_ref: 1.0
+    tilt_pid_min_output: 0.0
+    tilt_pid_max_output: 0.3
+    img_width: 640
+    img_height: 480
+    pan_limit: 1.3
+    tilt_limit: 0.92
