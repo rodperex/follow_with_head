@@ -22,7 +22,7 @@
 #include "follow_with_head/PID.hpp"
 #include "control_msgs/msg/joint_trajectory_controller_state.hpp"
 #include "trajectory_msgs/msg/joint_trajectory.hpp"
-#include "vision_msgs/msg/detection2_d_array.hpp"
+#include "vision_msgs/msg/detection3_d_array.hpp"
 #include "std_msgs/msg/float32.hpp"
 
 #include "rclcpp/rclcpp.hpp"
@@ -38,10 +38,10 @@ public:
   void control_cycle();
 
   void joint_state_callback(control_msgs::msg::JointTrajectoryControllerState::UniquePtr msg);
-  void object_detection_callback(vision_msgs::msg::Detection2DArray::UniquePtr msg);
+  void object_detection_callback(vision_msgs::msg::Detection3DArray::UniquePtr msg);
 
 private:
-  rclcpp::Subscription<vision_msgs::msg::Detection2DArray>::SharedPtr detection_sub_;
+  rclcpp::Subscription<vision_msgs::msg::Detection3DArray>::SharedPtr detection_sub_;
   // rclcpp::Subscription<control_msgs::msg::JointTrajectoryControllerState>::SharedPtr joint_sub_;
   rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr joint_pub_;
   rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr error_pub_;
@@ -54,10 +54,9 @@ private:
 
   PID pan_pid_, tilt_pid_;
 
-  int img_size_x_, img_size_y_, diff_x_, diff_y_;
+  double object_x_angle_, object_y_angle_;
 
   double pan_limit_, tilt_limit_; // radians
-  double scaling_x_, scaling_y_;
 
 };
 

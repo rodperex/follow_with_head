@@ -26,14 +26,9 @@ HeadController::HeadController()
 : Node("head_controller"),
   pan_pid_params_{0.0, 1.0, 0.0, 0.3},
   tilt_pid_params_{0.0, 1.0, 0.0, 0.3},
-  img_size_x_(640),
-  img_size_y_(480),
   pan_limit_(1.3),
   tilt_limit_(0.92)
 {
-
-  declare_parameter("img_width", img_size_x_);
-  declare_parameter("img_height", img_size_y_);
 
   declare_parameter("pan_limit", pan_limit_);
   declare_parameter("tilt_limit", tilt_limit_);
@@ -51,15 +46,12 @@ HeadController::HeadController()
   tilt_pid_.set_pid(tilt_pid_params_[0], tilt_pid_params_[1], tilt_pid_params_[2],
       tilt_pid_params_[3]);
 
-  scaling_x_ = pan_limit_ / (img_size_x_ / 2);
-  scaling_y_ = tilt_limit_ / (img_size_y_ / 2);
-
   // joint_sub_ = create_subscription<control_msgs::msg::JointTrajectoryControllerState>(
   //   "/joint_state", rclcpp::SensorDataQoS(),
   //   std::bind(&HeadController::joint_state_callback, this, _1));
 
-  detection_sub_ = create_subscription<vision_msgs::msg::Detection2DArray>(
-    "/object_detection", rclcpp::SensorDataQoS(),
+  detection_sub_ = create_subscription<vision_msgs::msg::Detection3DArray>(
+    "/detection_3d", rclcpp::SensorDataQoS(),
     std::bind(&HeadController::object_detection_callback, this, _1));
 
   joint_pub_ = create_publisher<trajectory_msgs::msg::JointTrajectory>("/joint_command", 100);
@@ -70,10 +62,10 @@ HeadController::HeadController()
 }
 
 void
-HeadController::object_detection_callback(vision_msgs::msg::Detection2DArray::UniquePtr msg)
+HeadController::object_detection_callback(vision_msgs::msg::Detection3DArray::UniquePtr msg)
 {
-  diff_x_ = (img_size_x_ / 2) - msg->detections[0].bbox.center.position.x;
-  diff_y_ = (img_size_y_ / 2) - msg->detections[0].bbox.center.position.y;
+  object_x_angle_ = atan2(msg->detections[0].bbox.center.position.x, msg->detections[0].bbox.center.position.z);
+  object_y_angle_ = atan2(msg->detections[0].bbox.center.position.y, msg->detections[0].bbox.center.position.z);
 }
 
 // void
@@ -104,8 +96,8 @@ HeadController::control_cycle()
   // double current_pan = last_state_->feedback.positions[0];
   // double current_tilt = last_state_->feedback.positions[1];
 
-  double desired_pan = pan_pid_.get_output(diff_x_ * scaling_x_);
-  double desired_tilt = tilt_pid_.get_output(diff_y_ * scaling_y_);
+  double desired_pan = pan_pid_.get_output(object_x_angle_);
+  double desired_tilt = tilt_pid_.get_output(object_y_angle_);
 
   command_msg.points[0].positions[0] = std::clamp(desired_pan, -pan_limit_,
       pan_limit_);
@@ -114,7 +106,7 @@ HeadController::control_cycle()
 
   joint_pub_->publish(command_msg);
 
-  error_msg.data = std::sqrt(diff_x_ * diff_x_ + diff_y_ * diff_y_);
+  error_msg.data = std::sqrt(object_x_angle_ * object_x_angle_ + object_y_angle_ * object_y_angle_);
   error_pub_->publish(error_msg);
 }
 
