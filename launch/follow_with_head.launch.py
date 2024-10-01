@@ -52,7 +52,7 @@ def generate_launch_description():
 
     ld.add_action(controller_cmd)
     ld.add_action(filter_cmd)
-    
+    ld.add_action(depth_cmd)
 
     return ld
 
