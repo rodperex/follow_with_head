@@ -12,15 +12,15 @@ TBD...
 
 ### Making another robot moving in circles with the colored object to be followed
 
-Just publish a twist command:
+Just publish a *twist*command:
 
 ```bash
 ros2 topic pub /cmd_vel geometry_msgs/msg/Twist "linear:
-  x: 0.2
+  x: <desired_linear_speed>
   y: 0.0
   z: 0.0
 angular:
   x: 0.0
   y: 0.0
-  z: 0.2" -r <desired_rate>
+  z: <desired_angular_speed>" -r <desired_rate>
 ```
