@@ -23,7 +23,7 @@
 #include "control_msgs/msg/joint_trajectory_controller_state.hpp"
 #include "trajectory_msgs/msg/joint_trajectory.hpp"
 #include "vision_msgs/msg/detection3_d_array.hpp"
-#include "std_msgs/msg/float32.hpp"
+#include <std_msgs/msg/float32_multi_array.hpp>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -42,9 +42,9 @@ public:
 
 private:
   rclcpp::Subscription<vision_msgs::msg::Detection3DArray>::SharedPtr detection_sub_;
-  // rclcpp::Subscription<control_msgs::msg::JointTrajectoryControllerState>::SharedPtr joint_sub_;
+  rclcpp::Subscription<control_msgs::msg::JointTrajectoryControllerState>::SharedPtr joint_sub_;
   rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr joint_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr error_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr error_pub_;
 
   rclcpp::TimerBase::SharedPtr timer_;
 

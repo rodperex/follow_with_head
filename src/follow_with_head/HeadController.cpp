@@ -46,9 +46,9 @@ HeadController::HeadController()
   tilt_pid_.set_pid(tilt_pid_params_[0], tilt_pid_params_[1], tilt_pid_params_[2],
       tilt_pid_params_[3]);
 
-  // joint_sub_ = create_subscription<control_msgs::msg::JointTrajectoryControllerState>(
-  //   "/joint_state", rclcpp::SensorDataQoS(),
-  //   std::bind(&HeadController::joint_state_callback, this, _1));
+  joint_sub_ = create_subscription<control_msgs::msg::JointTrajectoryControllerState>(
+    "/joint_state", rclcpp::SensorDataQoS(),
+    std::bind(&HeadController::joint_state_callback, this, _1));
 
   detection_sub_ = create_subscription<vision_msgs::msg::Detection3DArray>(
     "/detection_3d", rclcpp::SensorDataQoS(),
@@ -56,7 +56,7 @@ HeadController::HeadController()
 
   joint_pub_ = create_publisher<trajectory_msgs::msg::JointTrajectory>("/joint_command", 100);
 
-  error_pub_ = create_publisher<std_msgs::msg::Float32>("/error", 100);
+  error_pub_ = create_publisher<std_msgs::msg::Float32MultiArray>("/error", 100);
 
   timer_ = create_wall_timer(100ms, std::bind(&HeadController::control_cycle, this));
 }
@@ -64,16 +64,21 @@ HeadController::HeadController()
 void
 HeadController::object_detection_callback(vision_msgs::msg::Detection3DArray::UniquePtr msg)
 {
-  object_x_angle_ = atan2(msg->detections[0].bbox.center.position.x, msg->detections[0].bbox.center.position.z);
-  object_y_angle_ = atan2(msg->detections[0].bbox.center.position.y, msg->detections[0].bbox.center.position.z);
+  object_x_angle_ = atan2(msg->detections[0].bbox.center.position.x,
+      msg->detections[0].bbox.center.position.z);
+  object_y_angle_ = atan2(msg->detections[0].bbox.center.position.y,
+      msg->detections[0].bbox.center.position.z);
+
+  RCLCPP_INFO(get_logger(), "Object detected at:\n - Pan: %.2f rad\n - Tilt: %.2f rad",
+      object_x_angle_, object_y_angle_);
 }
 
-// void
-// HeadController::joint_state_callback(
-//   control_msgs::msg::JointTrajectoryControllerState::UniquePtr msg)
-// {
-//   last_state_ = std::move(msg);
-// }
+void
+HeadController::joint_state_callback(
+  control_msgs::msg::JointTrajectoryControllerState::UniquePtr msg)
+{
+  last_state_ = std::move(msg);
+}
 
 void
 HeadController::control_cycle()
@@ -81,7 +86,7 @@ HeadController::control_cycle()
   if (last_state_ == nullptr) {return;}
 
   trajectory_msgs::msg::JointTrajectory command_msg;
-  std_msgs::msg::Float32 error_msg;
+  std_msgs::msg::Float32MultiArray error_msg;
 
   command_msg.header.stamp = now();
 
@@ -93,8 +98,11 @@ HeadController::control_cycle()
   command_msg.points[0].accelerations.resize(2);
   command_msg.points[0].time_from_start = rclcpp::Duration(0ms);
 
-  // double current_pan = last_state_->feedback.positions[0];
-  // double current_tilt = last_state_->feedback.positions[1];
+  double current_pan = last_state_->feedback.positions[0];
+  double current_tilt = last_state_->feedback.positions[1];
+
+  RCLCPP_INFO(get_logger(), "Current pan: %.2f rad\n - Current tilt: %.2f rad", current_pan,
+      current_tilt);
 
   double desired_pan = pan_pid_.get_output(object_x_angle_);
   double desired_tilt = tilt_pid_.get_output(object_y_angle_);
@@ -106,7 +114,13 @@ HeadController::control_cycle()
 
   joint_pub_->publish(command_msg);
 
-  error_msg.data = std::sqrt(object_x_angle_ * object_x_angle_ + object_y_angle_ * object_y_angle_);
+  double pan_error = object_x_angle_ - current_pan;
+  double tilt_error = object_y_angle_ - current_tilt;
+
+  RCLCPP_INFO(get_logger(), "Pan error: %.2f rad\n - Tilt error: %.2f rad", pan_error, tilt_error);
+
+  error_msg.data.push_back(pan_error);
+  error_msg.data.push_back(tilt_error);
   error_pub_->publish(error_msg);
 }
 
