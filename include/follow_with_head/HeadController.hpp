@@ -29,7 +29,7 @@
 
 namespace follow_with_head
 {
-
+using namespace std::chrono_literals;
 class HeadController : public rclcpp::Node
 {
 public:
@@ -59,6 +59,10 @@ private:
   double pan_limit_, tilt_limit_; // radians
 
   std::string joint_name_pan_, joint_name_tilt_;
+
+  rclcpp::Time last_detection_time_;
+
+  const rclcpp::Duration MAX_DETECTION_AGE = rclcpp::Duration(5.0s);
 
 };
 

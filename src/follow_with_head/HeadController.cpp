@@ -20,7 +20,6 @@ namespace follow_with_head
 {
 
 using std::placeholders::_1;
-using namespace std::chrono_literals;
 
 HeadController::HeadController()
 : Node("follow_controller"),
@@ -78,6 +77,8 @@ HeadController::object_detection_callback(vision_msgs::msg::Detection3DArray::Un
       msg->detections[0].bbox.center.position.x,
       msg->detections[0].bbox.center.position.y, msg->detections[0].bbox.center.position.z,
       object_x_angle_, object_y_angle_);
+
+  last_detection_time_ = msg.get()->header.stamp;
 }
 
 void
@@ -95,6 +96,11 @@ HeadController::control_cycle()
 
   if (last_state_ == nullptr) {
     RCLCPP_WARN(get_logger(), "No joint state received yet");
+    return;
+  }
+
+  if ((now() - last_detection_time_) > MAX_DETECTION_AGE) {
+    RCLCPP_WARN(get_logger(), "No detection received lately. Stopping head");
     return;
   }
 
@@ -140,9 +146,6 @@ HeadController::control_cycle()
   error_msg.data.push_back(tilt_error);
   error_pub_->publish(error_msg);
 
-  // In case of no detections
-  object_x_angle_ = command_pan;
-  object_y_angle_ = command_tilt;
 }
 
 }  // namespace follow_with_head
