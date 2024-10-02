@@ -26,10 +26,10 @@ HSVFilter::HSVFilter()
 : Node("hsv_filter")
 {
   image_sub_ = image_transport::create_subscription(
-    this, "input_image", std::bind(&HSVFilter::image_callback, this, _1),
+    this, "/input_image", std::bind(&HSVFilter::image_callback, this, _1),
     "raw", rclcpp::SensorDataQoS().reliable().get_rmw_qos_profile());
   image_pub_ = image_transport::create_publisher(
-    this, "output_image", rclcpp::SensorDataQoS().reliable().get_rmw_qos_profile());
+    this, "/output_image", rclcpp::SensorDataQoS().reliable().get_rmw_qos_profile());
   detection_pub_ = create_publisher<vision_msgs::msg::Detection2DArray>(
     "detection_2d", rclcpp::SensorDataQoS().reliable());
 
