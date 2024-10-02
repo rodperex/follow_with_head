@@ -18,24 +18,33 @@ from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.conditions import IfCondition
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
     pkg_dir = get_package_share_directory('follow_with_head')
+    param_file = os.path.join(pkg_dir, 'config', 'params.yaml')
 
-    return LaunchDescription([ 
-    IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([pkg_dir, '/launch/head_controller.launch.py'])
-    ),
+    ld = LaunchDescription()
 
-    IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([pkg_dir, '/launch/hsv_filter.launch.py'])
-    ),
+    remappings = [
+        ('/input_depth', '/rgbd_camera/depth_image'),
+        ('/camera_info', '/rgbd_camera/camera_info')
+    ]
+    
+    depth_cmd = Node(
+        package='follow_with_head',
+        executable='depth_estimator',
+        output='screen',
+        remappings=remappings,
+        parameters=[param_file],
+    )
 
-    IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([pkg_dir, '/launch/depth_estimator.launch.py'])
-    )])
+    ld.add_action(depth_cmd)
 
+    print('launch file executed (depth_estimator)')
+
+    return ld
 
