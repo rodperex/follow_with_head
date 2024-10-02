@@ -20,7 +20,7 @@
 #include <utility>
 
 #include "follow_with_head/PID.hpp"
-#include "control_msgs/msg/joint_trajectory_controller_state.hpp"
+#include "sensor_msgs/msg/joint_state.hpp"
 #include "trajectory_msgs/msg/joint_trajectory.hpp"
 #include "vision_msgs/msg/detection3_d_array.hpp"
 #include <std_msgs/msg/float32_multi_array.hpp>
@@ -37,18 +37,18 @@ public:
 
   void control_cycle();
 
-  void joint_state_callback(control_msgs::msg::JointTrajectoryControllerState::UniquePtr msg);
+  void joint_state_callback(sensor_msgs::msg::JointState::UniquePtr msg);
   void object_detection_callback(vision_msgs::msg::Detection3DArray::UniquePtr msg);
 
 private:
   rclcpp::Subscription<vision_msgs::msg::Detection3DArray>::SharedPtr detection_sub_;
-  rclcpp::Subscription<control_msgs::msg::JointTrajectoryControllerState>::SharedPtr joint_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
   rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr joint_pub_;
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr error_pub_;
 
   rclcpp::TimerBase::SharedPtr timer_;
 
-  control_msgs::msg::JointTrajectoryControllerState::UniquePtr last_state_;
+  sensor_msgs::msg::JointState::UniquePtr last_state_;
 
   double pan_pid_params_[4], tilt_pid_params_[4];
 
@@ -57,6 +57,8 @@ private:
   double object_x_angle_, object_y_angle_;
 
   double pan_limit_, tilt_limit_; // radians
+
+  std::string joint_name_pan_, joint_name_tilt_;
 
 };
 

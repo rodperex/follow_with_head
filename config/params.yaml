@@ -10,6 +10,8 @@ hsv_filter:
 
 head_controller:
   ros__parameters:
+    pan_joint_name: head_1_joint
+    tilt_joint_name: head_2_joint
     use_sim_time: false
     pan_pid_min_ref: 0.0
     pan_pid_max_ref: 1.0

@@ -46,6 +46,5 @@ def generate_launch_description():
 
     print('launch file executed (head_controller)')
    
-
     return ld
 

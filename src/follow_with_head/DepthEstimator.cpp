@@ -89,7 +89,7 @@ DepthEstimator::callback_sync(
         cv_depth_ptr->image.at<uint16_t>(
           cv::Point2d(detection.bbox.center.position.x, detection.bbox.center.position.y)));
       }
-      RCLCPP_INFO(get_logger(), "x: %.2f, y: %.2f, z: %.2f", detection.bbox.center.position.x,
+      RCLCPP_DEBUG(get_logger(), "x: %.2f, y: %.2f, z: %.2f", detection.bbox.center.position.x,
           detection.bbox.center.position.y, depth);
 
       if (std::isnan(depth)) {
@@ -104,6 +104,8 @@ DepthEstimator::callback_sync(
       ray = ray / ray.z; // Normalize so z is 1.0. Ray is in camera frame
       cv::Point3d point = ray * depth; // The point is in camera frame
 
+      RCLCPP_DEBUG(get_logger(), "x: %.2f, y: %.2f, z: %.2f", point.x, point.y, point.z);
+
       detection_3d_msg.bbox.center.position.x = point.x;
       detection_3d_msg.bbox.center.position.y = point.y;
       detection_3d_msg.bbox.center.position.z = point.z;
@@ -112,8 +114,13 @@ DepthEstimator::callback_sync(
     }
 
     if (!detections_3d_msg.detections.empty()) {
+      RCLCPP_DEBUG(get_logger(), "Publishing %lu detections", detections_3d_msg.detections.size());
       detection_pub_->publish(detections_3d_msg);
+    } else {
+      RCLCPP_WARN(get_logger(), "No valid detections");
     }
+  } else {
+    RCLCPP_DEBUG(get_logger(), "No subscribers");
   }
 }
 

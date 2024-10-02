@@ -27,7 +27,7 @@ def generate_launch_description():
 
     return LaunchDescription([ 
     IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([pkg_dir, '/launch/head_controller.launch.py'])
+            PythonLaunchDescriptionSource([pkg_dir, '/launch/head_follow_controller.launch.py'])
     ),
 
     IncludeLaunchDescription(

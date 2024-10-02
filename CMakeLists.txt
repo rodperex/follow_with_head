@@ -16,6 +16,7 @@ find_package(visualization_msgs REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(image_geometry REQUIRED)
 find_package(depth_image_proc REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 find_package(rclcpp REQUIRED)
 
@@ -30,6 +31,7 @@ set(dependencies
   message_filters
   image_geometry
   depth_image_proc
+  sensor_msgs
   rclcpp
   )
 
