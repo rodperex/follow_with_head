@@ -47,7 +47,7 @@ HeadController::HeadController()
       tilt_pid_params_[3]);
 
   joint_sub_ = create_subscription<control_msgs::msg::JointTrajectoryControllerState>(
-    "/joint_state", rclcpp::SensorDataQoS(),
+    "/joint_states", rclcpp::SensorDataQoS(),
     std::bind(&HeadController::joint_state_callback, this, _1));
 
   detection_sub_ = create_subscription<vision_msgs::msg::Detection3DArray>(
@@ -77,13 +77,19 @@ void
 HeadController::joint_state_callback(
   control_msgs::msg::JointTrajectoryControllerState::UniquePtr msg)
 {
+  RCLCPP_INFO(get_logger(), "Joint state received");
   last_state_ = std::move(msg);
 }
 
 void
 HeadController::control_cycle()
 {
-  if (last_state_ == nullptr) {return;}
+  RCLCPP_INFO(get_logger(), "Control cycle");
+
+  if (last_state_ == nullptr) {
+    RCLCPP_WARN(get_logger(), "No joint state received yet");
+    return;
+  }
 
   trajectory_msgs::msg::JointTrajectory command_msg;
   std_msgs::msg::Float32MultiArray error_msg;
