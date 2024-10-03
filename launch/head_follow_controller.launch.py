@@ -31,6 +31,10 @@ def generate_launch_description():
     with open(param_file, 'r') as file:
         data = yaml.safe_load(file)
     
+    args=[]
+    args.append(str(data['head_controller']['ros__parameters']['use_ipc']))
+    args.append(str(data['head_controller']['ros__parameters']['real_time']))
+
     ld = LaunchDescription()
 
     remappings = [
@@ -43,7 +47,7 @@ def generate_launch_description():
         output='screen',
         remappings=remappings,
         parameters=[param_file],
-        arguments=[str(data['head_controller']['ros__parameters']['use_ipc'])]
+        arguments=args
     )
 
     ld.add_action(controller_cmd)

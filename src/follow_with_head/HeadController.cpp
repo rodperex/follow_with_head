@@ -113,7 +113,7 @@ HeadController::control_cycle()
   // }
 
   if (!object_detected_) {
-    RCLCPP_WARN(get_logger(), "No object detected. Stopping head");
+    RCLCPP_DEBUG(get_logger(), "No object detected. Stopping head");
     return;
   }
 
