@@ -22,8 +22,14 @@ namespace follow_with_head
 
 using std::placeholders::_1;
 
-HSVFilter::HSVFilter()
-: Node("hsv_filter")
+HSVFilter::HSVFilter(const rclcpp::NodeOptions & options)
+: Node("hsv_filter", options)
+{
+  self_config();
+}
+
+void
+HSVFilter::self_config()
 {
   image_sub_ = image_transport::create_subscription(
     this, "/input_image", std::bind(&HSVFilter::image_callback, this, _1),

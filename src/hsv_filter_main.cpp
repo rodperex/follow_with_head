@@ -19,9 +19,25 @@
 
 int main(int argc, char * argv[])
 {
+  bool use_ipc;
+
+  if (argv[1] == std::string("True"))
+  {
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Using IPC");
+    use_ipc = true;
+  }
+  else if (argv[1] == std::string("False"))
+  {
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "NOT Using IPC");
+    use_ipc = false;
+  } else {
+    RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Invalid argument. Usage: hsv_filter_main <use_ipc>");
+    return 1;
+  }
+
   rclcpp::init(argc, argv);
 
-  auto filter_node = std::make_shared<follow_with_head::HSVFilter>();
+  auto filter_node = std::make_shared<follow_with_head::HSVFilter>(rclcpp::NodeOptions().use_intra_process_comms(use_ipc));
 
   rclcpp::spin(filter_node);
 

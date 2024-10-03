@@ -33,7 +33,7 @@ using namespace std::chrono_literals;
 class HeadController : public rclcpp::Node
 {
 public:
-  HeadController();
+  HeadController(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
   void control_cycle();
 
@@ -45,6 +45,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
   rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr joint_pub_;
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr error_pub_;
+  void self_config();
 
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -62,7 +63,9 @@ private:
 
   rclcpp::Time last_detection_time_;
 
-  const rclcpp::Duration MAX_DETECTION_AGE = rclcpp::Duration(5.0s);
+  // const rclcpp::Duration MAX_DETECTION_AGE = rclcpp::Duration(5.0s);
+
+  bool object_detected_;
 
 };
 

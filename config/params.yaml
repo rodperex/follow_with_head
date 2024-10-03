@@ -23,7 +23,9 @@ head_controller:
     tilt_pid_max_output: 0.3
     pan_limit: 1.3
     tilt_limit: 0.92
+    use_ipc: true
 
 depth_estimator:
   ros__parameters:
     use_sim_time: false
+    use_ipc: true

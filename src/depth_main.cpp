@@ -19,9 +19,25 @@
 
 int main(int argc, char * argv[])
 {
+  bool use_ipc;
+
+  if (argv[1] == std::string("True"))
+  {
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Using IPC");
+    use_ipc = true;
+  }
+  else if (argv[1] == std::string("False"))
+  {
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "NOT Using IPC");
+    use_ipc = false;
+  } else {
+    RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Invalid argument. Usage: depth_main <use_ipc>");
+    return 1;
+  }
+
   rclcpp::init(argc, argv);
 
-  auto depth_node = std::make_shared<follow_with_head::DepthEstimator>();
+  auto depth_node = std::make_shared<follow_with_head::DepthEstimator>(rclcpp::NodeOptions().use_intra_process_comms(use_ipc));
 
   rclcpp::spin(depth_node);
 

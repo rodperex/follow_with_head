@@ -35,13 +35,14 @@ namespace follow_with_head
 class DepthEstimator : public rclcpp::Node
 {
 public:
-  DepthEstimator();
+  DepthEstimator(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
   void callback_sync(
     const sensor_msgs::msg::Image::ConstSharedPtr & image_msg,
     const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detection_msg);
   void callback_info(sensor_msgs::msg::CameraInfo::UniquePtr msg);
+  void self_config();
 
   typedef message_filters::sync_policies::ApproximateTime<
       sensor_msgs::msg::Image, vision_msgs::msg::Detection2DArray> MySyncPolicy;

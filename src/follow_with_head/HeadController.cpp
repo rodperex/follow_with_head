@@ -21,16 +21,23 @@ namespace follow_with_head
 
 using std::placeholders::_1;
 
-HeadController::HeadController()
-: Node("follow_controller"),
+HeadController::HeadController(const rclcpp::NodeOptions & options)
+: Node("follow_controller", options),
   pan_pid_params_{0.0, 1.0, 0.0, 0.3},
   tilt_pid_params_{0.0, 1.0, 0.0, 0.3},
   pan_limit_(1.3),
   tilt_limit_(0.92),
   joint_name_pan_("head_1_joint"),
-  joint_name_tilt_("head_2_joint")
+  joint_name_tilt_("head_2_joint"),
+  // last_detection_time_(now()),
+  object_detected_(false)
 {
+  self_config();
+}
 
+void
+HeadController::self_config()
+{
   declare_parameter("pan_limit", pan_limit_);
   declare_parameter("tilt_limit", tilt_limit_);
 
@@ -79,6 +86,7 @@ HeadController::object_detection_callback(vision_msgs::msg::Detection3DArray::Un
       object_x_angle_, object_y_angle_);
 
   last_detection_time_ = msg.get()->header.stamp;
+  object_detected_ = true;
 }
 
 void
@@ -99,8 +107,13 @@ HeadController::control_cycle()
     return;
   }
 
-  if ((now() - last_detection_time_) > MAX_DETECTION_AGE) {
-    RCLCPP_WARN(get_logger(), "No detection received lately. Stopping head");
+  // if ((now() - last_detection_time_) > MAX_DETECTION_AGE) {
+  //   RCLCPP_WARN(get_logger(), "No detection received lately. Stopping head");
+  //   return;
+  // }
+
+  if (!object_detected_) {
+    RCLCPP_WARN(get_logger(), "No object detected. Stopping head");
     return;
   }
 
@@ -145,6 +158,8 @@ HeadController::control_cycle()
   error_msg.data.push_back(pan_error);
   error_msg.data.push_back(tilt_error);
   error_pub_->publish(error_msg);
+
+  object_detected_ = false;
 
 }
 

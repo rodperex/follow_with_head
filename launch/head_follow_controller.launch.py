@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import yaml
 
 from ament_index_python.packages import get_package_share_directory
 
@@ -27,19 +28,22 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('follow_with_head')
     param_file = os.path.join(pkg_dir, 'config', 'params.yaml')
 
+    with open(param_file, 'r') as file:
+        data = yaml.safe_load(file)
+    
     ld = LaunchDescription()
 
     remappings = [
         ('/joint_command', '/head_controller/joint_trajectory')
     ]
     
-      
     controller_cmd = Node(
         package='follow_with_head',
         executable='head_controller',
         output='screen',
         remappings=remappings,
         parameters=[param_file],
+        arguments=[str(data['head_controller']['ros__parameters']['use_ipc'])]
     )
 
     ld.add_action(controller_cmd)

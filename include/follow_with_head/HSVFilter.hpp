@@ -32,10 +32,11 @@ namespace follow_with_head
 class HSVFilter : public rclcpp::Node
 {
 public:
-  HSVFilter();
+  HSVFilter(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
   void image_callback(const sensor_msgs::msg::Image::ConstSharedPtr & msg);
+  void self_config();
 
   int h_, s_, v_;
   int H_, S_, V_;

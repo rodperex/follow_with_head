@@ -22,8 +22,14 @@ namespace follow_with_head
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-DepthEstimator::DepthEstimator()
-: Node("depth_estimator")
+DepthEstimator::DepthEstimator(const rclcpp::NodeOptions & options)
+: Node("depth_estimator", options)
+{
+  self_config();
+}
+
+void
+DepthEstimator::self_config()
 {
   depth_sub_ = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(
     this, "/input_depth", rclcpp::SensorDataQoS().reliable().get_rmw_qos_profile());
