@@ -64,8 +64,6 @@ private:
 
   rclcpp::Time last_detection_time_;
 
-  // const rclcpp::Duration MAX_DETECTION_AGE = rclcpp::Duration(5.0s);
-
   bool object_detected_;
 
 };

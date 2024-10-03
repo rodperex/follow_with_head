@@ -29,7 +29,6 @@ HeadController::HeadController(const rclcpp::NodeOptions & options)
   tilt_limit_(0.92),
   pan_joint_name_("pan_joint"),
   tilt_joint_name_("tilt_joint"),
-  // last_detection_time_(now()),
   object_detected_(false)
 {
   self_config();
@@ -123,11 +122,6 @@ HeadController::control_cycle()
     return;
   }
 
-  // if ((now() - last_detection_time_) > MAX_DETECTION_AGE) {
-  //   RCLCPP_WARN(get_logger(), "No detection received lately. Stopping head");
-  //   return;
-  // }
-
   if (!object_detected_) {
     RCLCPP_DEBUG(get_logger(), "No object detected. Stopping head");
     return;
@@ -159,9 +153,9 @@ HeadController::control_cycle()
 
   RCLCPP_INFO(get_logger(), "* COMMAND: [%.2f, %.2f]", command_pan, command_tilt);
 
-  command_msg.points[0].positions[0] = std::clamp(command_pan, -pan_limit_,
+  command_msg.points[0].positions[0] = std::clamp(-command_pan, -pan_limit_,
       pan_limit_);
-  command_msg.points[0].positions[1] = std::clamp(command_tilt, -tilt_limit_,
+  command_msg.points[0].positions[1] = std::clamp(-command_tilt, -tilt_limit_,
       tilt_limit_);
 
   command_msg.header.stamp = now();
