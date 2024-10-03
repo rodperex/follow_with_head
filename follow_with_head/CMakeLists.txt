@@ -17,6 +17,7 @@ find_package(message_filters REQUIRED)
 find_package(image_geometry REQUIRED)
 find_package(depth_image_proc REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(error_msgs REQUIRED)
 
 find_package(rclcpp REQUIRED)
 
@@ -32,6 +33,7 @@ set(dependencies
   image_geometry
   depth_image_proc
   sensor_msgs
+  error_msgs
   rclcpp
   )
 
@@ -45,9 +47,9 @@ add_library(${PROJECT_NAME} SHARED
 )
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
 
-add_executable(head_controller src/head_controller_main.cpp)
-ament_target_dependencies(head_controller ${dependencies})
-target_link_libraries(head_controller ${PROJECT_NAME})
+add_executable(follow_controller src/head_controller_main.cpp)
+ament_target_dependencies(follow_controller ${dependencies})
+target_link_libraries(follow_controller ${PROJECT_NAME})
 
 add_executable(hsv_filter src/hsv_filter_main.cpp)
 ament_target_dependencies(hsv_filter ${dependencies})
@@ -59,7 +61,7 @@ target_link_libraries(depth_estimator ${PROJECT_NAME})
 
 install(TARGETS
   ${PROJECT_NAME}
-  head_controller
+  follow_controller
   hsv_filter
   depth_estimator
   ARCHIVE DESTINATION lib

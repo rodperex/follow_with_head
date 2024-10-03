@@ -1,6 +1,7 @@
 hsv_filter:
   ros__parameters:
     use_sim_time: false
+    fine_tune: false
     min_h: 92
     max_h: 132
     min_s: 0
@@ -10,10 +11,10 @@ hsv_filter:
     use_ipc: true
     real_time: false
 
-head_controller:
+follow_controller:
   ros__parameters:
-    pan_joint_name: head_1_joint
-    tilt_joint_name: head_2_joint
+    pan_joint_name: "head_1_joint"
+    tilt_joint_name: "head_2_joint"
     use_sim_time: false
     pan_pid_min_ref: 0.0
     pan_pid_max_ref: 1.0

@@ -27,8 +27,8 @@ HeadController::HeadController(const rclcpp::NodeOptions & options)
   tilt_pid_params_{0.0, 1.0, 0.0, 0.3},
   pan_limit_(1.3),
   tilt_limit_(0.92),
-  joint_name_pan_("head_1_joint"),
-  joint_name_tilt_("head_2_joint"),
+  pan_joint_name_("pan_joint"),
+  tilt_joint_name_("tilt_joint"),
   // last_detection_time_(now()),
   object_detected_(false)
 {
@@ -40,22 +40,38 @@ HeadController::self_config()
 {
   declare_parameter("pan_limit", pan_limit_);
   declare_parameter("tilt_limit", tilt_limit_);
-
-  declare_parameter("joint_name_pan", joint_name_pan_);
-  declare_parameter("joint_name_tilt", joint_name_tilt_);
-
+  declare_parameter("pan_joint_name", pan_joint_name_);
+  declare_parameter("tilt_joint_name", tilt_joint_name_);
   declare_parameter("pan_pid_min_ref", pan_pid_params_[0]);
   declare_parameter("pan_pid_max_ref", pan_pid_params_[1]);
   declare_parameter("pan_pid_min_output", pan_pid_params_[2]);
   declare_parameter("pan_pid_max_output", pan_pid_params_[3]);
-  pan_pid_.set_pid(pan_pid_params_[0], pan_pid_params_[1], pan_pid_params_[2], pan_pid_params_[3]);
-
   declare_parameter("tilt_pid_min_ref", tilt_pid_params_[0]);
   declare_parameter("tilt_pid_max_ref", tilt_pid_params_[1]);
   declare_parameter("tilt_pid_min_output", tilt_pid_params_[2]);
   declare_parameter("tilt_pid_max_output", tilt_pid_params_[3]);
+
+  get_parameter("pan_joint_name", pan_joint_name_);
+  get_parameter("tilt_joint_name", tilt_joint_name_);
+  get_parameter("pan_limit", pan_limit_);
+  get_parameter("tilt_limit", tilt_limit_);
+  get_parameter("pan_joint_name", pan_joint_name_);
+  get_parameter("tilt_joint_name", tilt_joint_name_);
+  get_parameter("pan_pid_min_ref", pan_pid_params_[0]);
+  get_parameter("pan_pid_max_ref", pan_pid_params_[1]);
+  get_parameter("pan_pid_min_output", pan_pid_params_[2]);
+  get_parameter("pan_pid_max_output", pan_pid_params_[3]);
+  get_parameter("tilt_pid_min_ref", tilt_pid_params_[0]);
+  get_parameter("tilt_pid_max_ref", tilt_pid_params_[1]);
+  get_parameter("tilt_pid_min_output", tilt_pid_params_[2]);
+  get_parameter("tilt_pid_max_output", tilt_pid_params_[3]);
+
+  pan_pid_.set_pid(pan_pid_params_[0], pan_pid_params_[1], pan_pid_params_[2], pan_pid_params_[3]);
   tilt_pid_.set_pid(tilt_pid_params_[0], tilt_pid_params_[1], tilt_pid_params_[2],
       tilt_pid_params_[3]);
+
+  RCLCPP_INFO(get_logger(), "Pan joint: %s", pan_joint_name_.c_str());
+  RCLCPP_INFO(get_logger(), "Tilt joint: %s", tilt_joint_name_.c_str());
 
   joint_sub_ = create_subscription<sensor_msgs::msg::JointState>(
     "/joint_states", rclcpp::SensorDataQoS(),
@@ -67,9 +83,9 @@ HeadController::self_config()
 
   joint_pub_ = create_publisher<trajectory_msgs::msg::JointTrajectory>("/joint_command", 100);
 
-  error_pub_ = create_publisher<std_msgs::msg::Float32MultiArray>("/error", 100);
+  error_pub_ = create_publisher<error_msgs::msg::PanTiltError>("/error", 100);
 
-  timer_ = create_wall_timer(300ms, std::bind(&HeadController::control_cycle, this));
+  timer_ = create_wall_timer(100ms, std::bind(&HeadController::control_cycle, this));
 }
 
 void
@@ -118,7 +134,7 @@ HeadController::control_cycle()
   }
 
   trajectory_msgs::msg::JointTrajectory command_msg;
-  std_msgs::msg::Float32MultiArray error_msg;
+  error_msgs::msg::PanTiltError error_msg;
   double current_pan, current_tilt;
 
   command_msg.points.resize(1);
@@ -129,11 +145,11 @@ HeadController::control_cycle()
   command_msg.points[0].time_from_start = rclcpp::Duration(0ms);
 
   for (size_t i = 0; i < last_state_->name.size(); i++) {
-    if (last_state_->name[i] == joint_name_pan_) {
-      command_msg.joint_names[0] = joint_name_pan_;
+    if (last_state_->name[i] == pan_joint_name_) {
+      command_msg.joint_names[0] = pan_joint_name_;
       current_pan = last_state_->position[i];
-    } else if (last_state_->name[i] == joint_name_tilt_) {
-      command_msg.joint_names[1] = joint_name_tilt_;
+    } else if (last_state_->name[i] == tilt_joint_name_) {
+      command_msg.joint_names[1] = tilt_joint_name_;
       current_tilt = last_state_->position[i];
     }
   }
@@ -154,9 +170,9 @@ HeadController::control_cycle()
   double pan_error = object_x_angle_ - current_pan;
   double tilt_error = object_y_angle_ - current_tilt;
 
-  error_msg.data.clear();
-  error_msg.data.push_back(pan_error);
-  error_msg.data.push_back(tilt_error);
+  error_msg.header.stamp = now();
+  error_msg.pan_error = pan_error;
+  error_msg.tilt_error = tilt_error;
   error_pub_->publish(error_msg);
 
   object_detected_ = false;

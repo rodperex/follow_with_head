@@ -21,13 +21,10 @@ int main(int argc, char * argv[])
 {
   bool use_ipc;
 
-  if (argv[1] == std::string("True"))
-  {
+  if (argv[1] == std::string("True")) {
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Using IPC");
     use_ipc = true;
-  }
-  else if (argv[1] == std::string("False"))
-  {
+  } else if (argv[1] == std::string("False")) {
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "NOT Using IPC");
     use_ipc = false;
   } else {
@@ -37,7 +34,9 @@ int main(int argc, char * argv[])
 
   rclcpp::init(argc, argv);
 
-  auto depth_node = std::make_shared<follow_with_head::DepthEstimator>(rclcpp::NodeOptions().use_intra_process_comms(use_ipc));
+  auto depth_node =
+    std::make_shared<follow_with_head::DepthEstimator>(
+    rclcpp::NodeOptions().use_intra_process_comms(use_ipc));
 
   rclcpp::spin(depth_node);
 

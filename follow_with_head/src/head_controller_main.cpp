@@ -21,54 +21,51 @@ int main(int argc, char * argv[])
 {
   bool use_ipc, real_time;
 
-  if (argv[1] == std::string("True"))
-  {
+  if (argv[1] == std::string("True")) {
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Using IPC");
     use_ipc = true;
-  }
-  else if (argv[1] == std::string("False"))
-  {
+  } else if (argv[1] == std::string("False")) {
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "NOT Using IPC");
     use_ipc = false;
   } else {
-    RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Invalid argument. Usage: head_controller_main <use_ipc> <real_time>");
+    RCLCPP_ERROR(rclcpp::get_logger("rclcpp"),
+      "Invalid argument. Usage: head_controller_main <use_ipc> <real_time>");
     return 1;
   }
 
-  if (argv[2] == std::string("True"))
-  {
+  if (argv[2] == std::string("True")) {
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Real time");
     real_time = true;
-  }
-  else if (argv[2] == std::string("False"))
-  {
+  } else if (argv[2] == std::string("False")) {
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "NOT Real time");
     real_time = false;
   } else {
-    RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Invalid argument. Usage: head_controller_main <use_ipc> <real_time>");
+    RCLCPP_ERROR(rclcpp::get_logger("rclcpp"),
+      "Invalid argument. Usage: head_controller_main <use_ipc> <real_time>");
     return 1;
   }
 
   rclcpp::init(argc, argv);
 
-  auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
+  auto executor = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
 
-  if (!real_time)
-  {
-    auto head_controller_node = std::make_shared<follow_with_head::HeadController>(rclcpp::NodeOptions().use_intra_process_comms(use_ipc));
+  if (!real_time) {
+    auto head_controller_node =
+      std::make_shared<follow_with_head::HeadController>(
+      rclcpp::NodeOptions().use_intra_process_comms(use_ipc));
     executor->add_node(head_controller_node);
     executor->spin();
   } else {
-    auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
+    auto executor = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
     std::unique_ptr<std::thread> thread = std::make_unique<std::thread>(
-        [executor]() {
-          sched_param sch;
-          sch.sched_priority = 60;
-          if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &sch) == -1) {
-            perror("pthread_setschedparam failed");
-            exit(-1);
-          }
-          executor->spin();
+      [executor]() {
+        sched_param sch;
+        sch.sched_priority = 60;
+        if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &sch) == -1) {
+          perror("pthread_setschedparam failed");
+          exit(-1);
+        }
+        executor->spin();
         });
   }
 

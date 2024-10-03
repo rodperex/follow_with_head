@@ -60,6 +60,7 @@ HSVFilter::self_config()
   cv::createTrackbar("High S", "Filtered Image", &S_, 255);
   cv::createTrackbar("Low V", "Filtered Image", &v_, 255);
   cv::createTrackbar("High V", "Filtered Image", &V_, 255);
+  
 }
 
 void

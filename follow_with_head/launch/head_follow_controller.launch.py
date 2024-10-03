@@ -32,8 +32,8 @@ def generate_launch_description():
         data = yaml.safe_load(file)
     
     args=[]
-    args.append(str(data['head_controller']['ros__parameters']['use_ipc']))
-    args.append(str(data['head_controller']['ros__parameters']['real_time']))
+    args.append(str(data['follow_controller']['ros__parameters']['use_ipc']))
+    args.append(str(data['follow_controller']['ros__parameters']['real_time']))
 
     ld = LaunchDescription()
 
@@ -43,7 +43,7 @@ def generate_launch_description():
     
     controller_cmd = Node(
         package='follow_with_head',
-        executable='head_controller',
+        executable='follow_controller',
         output='screen',
         remappings=remappings,
         parameters=[param_file],

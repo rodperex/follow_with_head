@@ -24,6 +24,7 @@
 #include "trajectory_msgs/msg/joint_trajectory.hpp"
 #include "vision_msgs/msg/detection3_d_array.hpp"
 #include <std_msgs/msg/float32_multi_array.hpp>
+#include "error_msgs/msg/pan_tilt_error.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -44,7 +45,7 @@ private:
   rclcpp::Subscription<vision_msgs::msg::Detection3DArray>::SharedPtr detection_sub_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_sub_;
   rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr joint_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr error_pub_;
+  rclcpp::Publisher<error_msgs::msg::PanTiltError>::SharedPtr error_pub_;
   void self_config();
 
   rclcpp::TimerBase::SharedPtr timer_;
@@ -59,7 +60,7 @@ private:
 
   double pan_limit_, tilt_limit_; // radians
 
-  std::string joint_name_pan_, joint_name_tilt_;
+  std::string pan_joint_name_, tilt_joint_name_;
 
   rclcpp::Time last_detection_time_;
 
