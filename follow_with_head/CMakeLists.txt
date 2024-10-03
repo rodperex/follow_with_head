@@ -59,11 +59,16 @@ add_executable(depth_estimator src/depth_main.cpp)
 ament_target_dependencies(depth_estimator ${dependencies})
 target_link_libraries(depth_estimator ${PROJECT_NAME})
 
+add_executable(whole src/whole.cpp)
+ament_target_dependencies(whole ${dependencies})
+target_link_libraries(whole ${PROJECT_NAME})
+
 install(TARGETS
   ${PROJECT_NAME}
   follow_controller
   hsv_filter
   depth_estimator
+  whole
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
