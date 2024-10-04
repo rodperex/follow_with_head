@@ -21,6 +21,7 @@
   <depend>message_filters</depend>
   <depend>image_geometry</depend>
   <depend>depth_image_proc</depend>
+  <depend>error_msgs</depend>
   <depend>sensor_msgs</depend>
   
   <export>
