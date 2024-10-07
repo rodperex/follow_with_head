@@ -54,13 +54,16 @@ HSVFilter::self_config()
   get_parameter("max_v", V_);
 
   cv::namedWindow("Filtered Image");
-  cv::createTrackbar("Low H", "Filtered Image", &h_, 360 / 2);
-  cv::createTrackbar("High H", "Filtered Image", &H_, 360 / 2);
-  cv::createTrackbar("Low S", "Filtered Image", &s_, 255);
-  cv::createTrackbar("High S", "Filtered Image", &S_, 255);
-  cv::createTrackbar("Low V", "Filtered Image", &v_, 255);
-  cv::createTrackbar("High V", "Filtered Image", &V_, 255);
-  
+  cv::createTrackbar("Low H", "Filtered Image", nullptr, 180, 0);
+  cv::setTrackbarPos("Low H", "Filtered Image", h_);
+  cv::createTrackbar("High H", "Filtered Image", nullptr, 180, 0);
+  cv::setTrackbarPos("High H", "Filtered Image", H_);
+  cv::createTrackbar("Low S", "Filtered Image", nullptr, 255, 0);
+  cv::setTrackbarPos("Low S", "Filtered Image", s_);
+  cv::createTrackbar("High S", "Filtered Image", nullptr, 255, 0);
+  cv::setTrackbarPos("High S", "Filtered Image", S_);
+  cv::createTrackbar("Low V", "Filtered Image", nullptr, 255, 0);
+  cv::setTrackbarPos("Low V", "Filtered Image", v_);
 }
 
 void
