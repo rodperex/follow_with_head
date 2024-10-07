@@ -26,6 +26,7 @@
 #include "image_geometry/pinhole_camera_model.hpp"
 #include "cv_bridge/cv_bridge.hpp"
 #include "depth_image_proc/depth_traits.hpp"
+#include "opencv2/highgui.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -38,33 +39,23 @@ public:
   DepthEstimator(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
-  // void callback_sync(
-  //   const sensor_msgs::msg::Image::ConstSharedPtr & image_msg,
-  //   const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detection_msg);
-  void callback_info(sensor_msgs::msg::CameraInfo::UniquePtr msg);
-  void self_config();
-  // typedef message_filters::sync_policies::ApproximateTime<
-  //     sensor_msgs::msg::Image, vision_msgs::msg::Detection2DArray> MySyncPolicy;
-
-  // std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::Image>> depth_sub_;
-  // std::shared_ptr<message_filters::Subscriber<vision_msgs::msg::Detection2DArray>> detection_sub_;
-  // std::shared_ptr<message_filters::Synchronizer<MySyncPolicy>> sync_;
-
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr info_sub_;
   std::shared_ptr<image_geometry::PinholeCameraModel> model_;
 
   rclcpp::Publisher<vision_msgs::msg::Detection3DArray>::SharedPtr detection_pub_;
 
-
   rclcpp::TimerBase::SharedPtr timer_;  
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
   rclcpp::Subscription<vision_msgs::msg::Detection2DArray>::SharedPtr detection2d_sub_;
+
+  sensor_msgs::msg::Image::UniquePtr last_image_;
+  vision_msgs::msg::Detection2DArray::UniquePtr last_detection_;
+
+  void callback_info(sensor_msgs::msg::CameraInfo::UniquePtr msg);
+  void self_config();
   void timerCallback();
   void imageCallback(sensor_msgs::msg::Image::UniquePtr msg);
   void detectionCallback(vision_msgs::msg::Detection2DArray::UniquePtr msg);
-  sensor_msgs::msg::Image::UniquePtr last_image_;
-  vision_msgs::msg::Detection2DArray::UniquePtr last_detection_;
-  
 };
 
 }  // namespace follow_with_head
