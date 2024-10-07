@@ -38,17 +38,17 @@ public:
   DepthEstimator(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
-  void callback_sync(
-    const sensor_msgs::msg::Image::ConstSharedPtr & image_msg,
-    const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detection_msg);
+  // void callback_sync(
+  //   const sensor_msgs::msg::Image::ConstSharedPtr & image_msg,
+  //   const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detection_msg);
   void callback_info(sensor_msgs::msg::CameraInfo::UniquePtr msg);
   void self_config();
-  typedef message_filters::sync_policies::ApproximateTime<
-      sensor_msgs::msg::Image, vision_msgs::msg::Detection2DArray> MySyncPolicy;
+  // typedef message_filters::sync_policies::ApproximateTime<
+  //     sensor_msgs::msg::Image, vision_msgs::msg::Detection2DArray> MySyncPolicy;
 
-  std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::Image>> depth_sub_;
-  std::shared_ptr<message_filters::Subscriber<vision_msgs::msg::Detection2DArray>> detection_sub_;
-  std::shared_ptr<message_filters::Synchronizer<MySyncPolicy>> sync_;
+  // std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::Image>> depth_sub_;
+  // std::shared_ptr<message_filters::Subscriber<vision_msgs::msg::Detection2DArray>> detection_sub_;
+  // std::shared_ptr<message_filters::Synchronizer<MySyncPolicy>> sync_;
 
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr info_sub_;
   std::shared_ptr<image_geometry::PinholeCameraModel> model_;
