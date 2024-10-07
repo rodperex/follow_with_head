@@ -43,7 +43,6 @@ private:
     const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detection_msg);
   void callback_info(sensor_msgs::msg::CameraInfo::UniquePtr msg);
   void self_config();
-
   typedef message_filters::sync_policies::ApproximateTime<
       sensor_msgs::msg::Image, vision_msgs::msg::Detection2DArray> MySyncPolicy;
 
@@ -55,6 +54,17 @@ private:
   std::shared_ptr<image_geometry::PinholeCameraModel> model_;
 
   rclcpp::Publisher<vision_msgs::msg::Detection3DArray>::SharedPtr detection_pub_;
+
+
+  rclcpp::TimerBase::SharedPtr timer_;  
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
+  rclcpp::Subscription<vision_msgs::msg::Detection2DArray>::SharedPtr detection2d_sub_;
+  void timerCallback();
+  void imageCallback(sensor_msgs::msg::Image::UniquePtr msg);
+  void detectionCallback(vision_msgs::msg::Detection2DArray::UniquePtr msg);
+  sensor_msgs::msg::Image::UniquePtr last_image_;
+  vision_msgs::msg::Detection2DArray::UniquePtr last_detection_;
+  
 };
 
 }  // namespace follow_with_head

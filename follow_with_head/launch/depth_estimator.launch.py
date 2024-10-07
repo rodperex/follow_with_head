@@ -34,8 +34,8 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     remappings = [
-        ('/input_depth', '/rgbd_camera/depth_image'),
-        ('/camera_info', '/rgbd_camera/camera_info')
+        ('/input_depth', '/head_front_camera/depth/image_raw'),
+        ('/camera_info', '/head_front_camera/depth/camera_info')
     ]
     
     depth_cmd = Node(
