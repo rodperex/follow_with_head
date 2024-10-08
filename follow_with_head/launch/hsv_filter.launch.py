@@ -34,7 +34,7 @@ def generate_launch_description():
     ld = LaunchDescription()
     
     remappings = [
-        ('/input_image', '/rgbd_camera/image')
+        ('/input_image', '/head_front_camera/rgb/image_raw')
     ]
 
     filter_cmd = Node(

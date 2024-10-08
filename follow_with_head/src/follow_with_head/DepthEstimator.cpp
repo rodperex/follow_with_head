@@ -31,20 +31,23 @@ DepthEstimator::DepthEstimator(const rclcpp::NodeOptions & options)
 void
 DepthEstimator::self_config()
 {
-  depth_sub_ = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::Image>>(
-    this, "/input_depth", rclcpp::SensorDataQoS().reliable().get_rmw_qos_profile());
-  detection_sub_ =
-    std::make_shared<message_filters::Subscriber<vision_msgs::msg::Detection2DArray>>(
-    this, "/detection_2d", rclcpp::SensorDataQoS().reliable().get_rmw_qos_profile());
-
-  sync_ = std::make_shared<message_filters::Synchronizer<MySyncPolicy>>(
-    MySyncPolicy(100), *depth_sub_, *detection_sub_);
-  sync_->registerCallback(std::bind(&DepthEstimator::callback_sync, this, _1, _2));
-
   info_sub_ = create_subscription<sensor_msgs::msg::CameraInfo>(
     "/camera_info", 1, std::bind(&DepthEstimator::callback_info, this, _1));
   detection_pub_ = create_publisher<vision_msgs::msg::Detection3DArray>(
     "/detection_3d", rclcpp::SensorDataQoS().reliable());
+
+  // Create a timer to publish the image
+  timer_ = this->create_wall_timer(
+    std::chrono::milliseconds(1000 / 30),
+    std::bind(&DepthEstimator::timerCallback, this));
+
+  image_sub_ = create_subscription<sensor_msgs::msg::Image>(
+    "/input_depth", 1, std::bind(&DepthEstimator::imageCallback, this, _1));
+
+  detection2d_sub_ = create_subscription<vision_msgs::msg::Detection2DArray>(
+    "/detection_2d", 1, std::bind(&DepthEstimator::detectionCallback, this, _1));
+
+  RCLCPP_INFO(get_logger(), "DepthEstimator initialized");
 }
 
 void
@@ -58,72 +61,84 @@ DepthEstimator::callback_info(sensor_msgs::msg::CameraInfo::UniquePtr msg)
   info_sub_ = nullptr;
 }
 
-void
-DepthEstimator::callback_sync(
-  const sensor_msgs::msg::Image::ConstSharedPtr & image_msg,
-  const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detection_msg)
+void DepthEstimator::imageCallback(sensor_msgs::msg::Image::UniquePtr msg)
 {
+  last_image_ = std::move(msg);;
+}
+
+void DepthEstimator::detectionCallback(vision_msgs::msg::Detection2DArray::UniquePtr msg)
+{
+  last_detection_ = std::move(msg);
+}
+
+void DepthEstimator::timerCallback(){
+  
   if (model_ == nullptr) {
     RCLCPP_WARN(get_logger(), "Camera Model not yet available");
     return;
   }
 
-  if (image_msg->encoding != "16UC1" && image_msg->encoding != "32FC1") {
+  if (last_image_ == nullptr) {
+    RCLCPP_WARN(get_logger(), "No image received");
+    return;
+  }
+
+  if (last_detection_ == nullptr) {
+    RCLCPP_WARN(get_logger(), "No detections received");
+    return;
+  }
+
+  if (last_image_->encoding != "16UC1" && last_image_->encoding != "32FC1") {
     RCLCPP_ERROR(get_logger(), "The image type has not depth info");
     return;
   }
 
   if (detection_pub_->get_subscription_count() > 0) {
     vision_msgs::msg::Detection3DArray detections_3d_msg;
-    detections_3d_msg.header = detection_msg->header;
+    detections_3d_msg.header = last_detection_->header;
 
-    cv_bridge::CvImagePtr cv_depth_ptr = cv_bridge::toCvCopy(*image_msg, image_msg->encoding);
+    cv_bridge::CvImagePtr cv_depth_ptr = cv_bridge::toCvCopy(*last_image_, last_image_->encoding);
 
-    for (const auto & detection : detection_msg->detections) {
+    for (const auto & detection : last_detection_->detections) {
       vision_msgs::msg::Detection3D detection_3d_msg;
       detection_3d_msg.results = detection.results;
+      cv::Point2d point2d(detection.bbox.center.position.x, detection.bbox.center.position.y);
 
       float depth;
-      if (image_msg->encoding == "32FC1") {
+      if (last_image_->encoding == "32FC1") {
         depth = depth_image_proc::DepthTraits<float>::toMeters(
-        cv_depth_ptr->image.at<float>(
-          cv::Point2d(detection.bbox.center.position.x, detection.bbox.center.position.y)));
+          cv_depth_ptr->image.at<float>(point2d));
       }
 
-      if (image_msg->encoding == "16UC1") {
+      if (last_image_->encoding == "16UC1") {
         depth = depth_image_proc::DepthTraits<uint16_t>::toMeters(
-        cv_depth_ptr->image.at<uint16_t>(
-          cv::Point2d(detection.bbox.center.position.x, detection.bbox.center.position.y)));
+          cv_depth_ptr->image.at<uint16_t>(point2d));
       }
       RCLCPP_DEBUG(get_logger(), "x: %.2f, y: %.2f, z: %.2f", detection.bbox.center.position.x,
           detection.bbox.center.position.y, depth);
 
-      if (std::isnan(depth)) {
-        continue;
+      if (!std::isnan(depth) && depth > 0.0) {
+        cv::Point3d ray = model_->projectPixelTo3dRay(
+          model_->rectifyPoint(point2d)); // Rectifies taking into account the distortion model
+
+        ray = ray / ray.z; // Normalize so z is 1.0. Ray is in camera frame
+        cv::Point3d point = ray * depth; // The point is in camera frame
+
+        RCLCPP_DEBUG(get_logger(), "x: %.2f, y: %.2f, z: %.2f", point.x, point.y, point.z);
+
+        detection_3d_msg.bbox.center.position.x = point.x;
+        detection_3d_msg.bbox.center.position.y = point.y;
+        detection_3d_msg.bbox.center.position.z = point.z;
+
+        detections_3d_msg.detections.push_back(detection_3d_msg);
       }
-
-      cv::Point3d ray = model_->projectPixelTo3dRay(
-        model_->rectifyPoint( // Rectifies taking into account the distortion model
-          cv::Point2d(
-            detection.bbox.center.position.x, detection.bbox.center.position.y)));
-
-      ray = ray / ray.z; // Normalize so z is 1.0. Ray is in camera frame
-      cv::Point3d point = ray * depth; // The point is in camera frame
-
-      RCLCPP_DEBUG(get_logger(), "x: %.2f, y: %.2f, z: %.2f", point.x, point.y, point.z);
-
-      detection_3d_msg.bbox.center.position.x = point.x;
-      detection_3d_msg.bbox.center.position.y = point.y;
-      detection_3d_msg.bbox.center.position.z = point.z;
-
-      detections_3d_msg.detections.push_back(detection_3d_msg);
     }
 
     if (!detections_3d_msg.detections.empty()) {
       RCLCPP_DEBUG(get_logger(), "Publishing %lu detections", detections_3d_msg.detections.size());
       detection_pub_->publish(detections_3d_msg);
     } else {
-      RCLCPP_WARN(get_logger(), "No valid detections");
+      RCLCPP_DEBUG(get_logger(), "No valid detections");
     }
   } else {
     RCLCPP_DEBUG(get_logger(), "No subscribers");
