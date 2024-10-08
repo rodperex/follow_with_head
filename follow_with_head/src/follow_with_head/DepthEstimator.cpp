@@ -73,6 +73,11 @@ DepthEstimator::callback_sync(
     return;
   }
 
+  if (last_detection_ == nullptr) {
+    RCLCPP_WARN(get_logger(), "No detections received");
+    return;
+  }
+
   if (detection_pub_->get_subscription_count() > 0) {
     vision_msgs::msg::Detection3DArray detections_3d_msg;
     detections_3d_msg.header = detection_msg->header;

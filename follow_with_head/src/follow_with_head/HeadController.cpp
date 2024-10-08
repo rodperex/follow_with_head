@@ -136,7 +136,7 @@ HeadController::control_cycle()
   command_msg.points[0].velocities.resize(2);
   command_msg.points[0].accelerations.resize(2);
   command_msg.joint_names.resize(2);
-  command_msg.points[0].time_from_start = rclcpp::Duration(0ms);
+  command_msg.points[0].time_from_start = rclcpp::Duration(500ms);
 
   for (size_t i = 0; i < last_state_->name.size(); i++) {
     if (last_state_->name[i] == pan_joint_name_) {
@@ -148,14 +148,17 @@ HeadController::control_cycle()
     }
   }
 
-  double command_pan = pan_pid_.get_output(object_x_angle_);
-  double command_tilt = tilt_pid_.get_output(object_y_angle_);
+  // double command_pan = pan_pid_.get_output(-object_x_angle_);
+  // double command_tilt = tilt_pid_.get_output(-object_y_angle_);
+
+  double command_pan = -object_x_angle_;
+  double command_tilt = -object_y_angle_;
 
   RCLCPP_INFO(get_logger(), "* COMMAND: [%.2f, %.2f]", command_pan, command_tilt);
 
-  command_msg.points[0].positions[0] = std::clamp(-command_pan, -pan_limit_,
+  command_msg.points[0].positions[0] = std::clamp(command_pan, -pan_limit_,
       pan_limit_);
-  command_msg.points[0].positions[1] = std::clamp(-command_tilt, -tilt_limit_,
+  command_msg.points[0].positions[1] = std::clamp(command_tilt, -tilt_limit_,
       tilt_limit_);
 
   command_msg.header.stamp = now();
