@@ -20,7 +20,7 @@
 int main(int argc, char * argv[])
 {
   bool use_ipc_follow, use_ipc_hsv, use_ipc_depth;
-  
+
   if (argv[1] == std::string("True")) {
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Using IPC");
     use_ipc_follow = true;

@@ -44,7 +44,7 @@ private:
 
   rclcpp::Publisher<vision_msgs::msg::Detection3DArray>::SharedPtr detection_pub_;
 
-  rclcpp::TimerBase::SharedPtr timer_;  
+  rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
   rclcpp::Subscription<vision_msgs::msg::Detection2DArray>::SharedPtr detection2d_sub_;
 
