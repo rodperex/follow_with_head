@@ -31,6 +31,7 @@ HeadController::HeadController(const rclcpp::NodeOptions & options)
   tilt_limit_(0.92),
   pan_joint_name_("pan_joint"),
   tilt_joint_name_("tilt_joint"),
+  action_sec_(1000),
   object_detected_(false)
 {
   self_config();
@@ -54,6 +55,7 @@ HeadController::self_config()
   declare_parameter("pan_joint_frame", pan_frame_id_);
   declare_parameter("tilt_joint_frame", tilt_frame_id_);
   declare_parameter("camera_optical_frame", camera_optical_frame_id_);
+  declare_parameter("action_sec", action_sec_);
 
   get_parameter("pan_joint_name", pan_joint_name_);
   get_parameter("tilt_joint_name", tilt_joint_name_);
@@ -72,6 +74,7 @@ HeadController::self_config()
   get_parameter("camera_optical_frame", camera_optical_frame_id_);
   get_parameter("pan_joint_frame", pan_frame_id_);
   get_parameter("tilt_joint_frame", tilt_frame_id_);
+  get_parameter("action_sec", action_sec_);
 
   pan_pid_.set_pid(pan_pid_params_[0], pan_pid_params_[1], pan_pid_params_[2], pan_pid_params_[3]);
   tilt_pid_.set_pid(tilt_pid_params_[0], tilt_pid_params_[1], tilt_pid_params_[2],
@@ -188,7 +191,7 @@ HeadController::joint_trajectory_result_callback(
 void
 HeadController::send_joint_trajectory_goal(double pan, double tilt)
 {
-  if (!follow_joint_trajectory_client_->wait_for_action_server(std::chrono::seconds(10))) {
+  if (!follow_joint_trajectory_client_->wait_for_action_server(10s)) {
     RCLCPP_ERROR(get_logger(), "Action server not available after waiting");
   }
 
@@ -202,7 +205,7 @@ HeadController::send_joint_trajectory_goal(double pan, double tilt)
   goal_msg.trajectory.points[0].velocities.resize(2);
   goal_msg.trajectory.points[0].accelerations.resize(2);
   goal_msg.trajectory.joint_names.resize(2);
-  goal_msg.trajectory.points[0].time_from_start = rclcpp::Duration(0ms);
+  goal_msg.trajectory.points[0].time_from_start = rclcpp::Duration(action_sec_, 0);
 
   goal_msg.trajectory.points[0].positions[0] = pan;
   goal_msg.trajectory.points[0].positions[1] = tilt;

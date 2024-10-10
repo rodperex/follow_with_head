@@ -86,6 +86,8 @@ private:
 
   rclcpp::Time last_detection_time_;
 
+  double action_sec_;
+  
   bool object_detected_;
 
   tf2::BufferCore tf_buffer_;
