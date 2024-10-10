@@ -80,7 +80,8 @@ HeadController::self_config()
     "/detection_3d", rclcpp::SensorDataQoS(),
     std::bind(&HeadController::object_detection_callback, this, _1));
 
-  joint_pub_ = create_publisher<trajectory_msgs::msg::JointTrajectory>("/joint_command", 100);
+  follow_joint_trajectory_client_ = rclcpp_action::create_client<control_msgs::action::FollowJointTrajectory>(
+    this, "/head_controller/follow_joint_trajectory");
 
   error_pub_ = create_publisher<error_msgs::msg::PanTiltError>("/error", 100);
 
@@ -113,6 +114,84 @@ HeadController::joint_state_callback(
 }
 
 void
+HeadController::joint_trajectory_response_callback(
+  rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::SharedPtr
+  goal_handle)
+{
+  (void) goal_handle;
+  RCLCPP_DEBUG(get_logger(), "Goal accepted");
+}
+
+void
+HeadController::joint_trajectory_feedback_callback(
+  rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::SharedPtr
+  goal_handle,
+  const std::shared_ptr<const control_msgs::action::FollowJointTrajectory::Feedback> feedback)
+{
+  (void) goal_handle;
+  RCLCPP_INFO(get_logger(), "Execution time: %.2d", feedback->desired.time_from_start.sec);
+}
+
+void
+HeadController::joint_trajectory_result_callback(
+  const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::WrappedResult
+  & result)
+{
+  switch (result.code) {
+    case rclcpp_action::ResultCode::SUCCEEDED:
+      RCLCPP_DEBUG(get_logger(), "La acción fue completada con éxito.");
+      break;
+    case rclcpp_action::ResultCode::ABORTED:
+      RCLCPP_ERROR(get_logger(), "La acción fue abortada.");
+      break;
+    case rclcpp_action::ResultCode::CANCELED:
+      RCLCPP_WARN(get_logger(), "La acción fue cancelada.");
+      break;
+    default:
+      RCLCPP_ERROR(get_logger(), "Resultado desconocido.");
+      break;
+  }
+}
+
+void
+HeadController::send_joint_trajectory_goal(double pan, double tilt)
+{
+  if (!follow_joint_trajectory_client_->wait_for_action_server(std::chrono::seconds(10))) {
+    RCLCPP_ERROR(get_logger(), "Action server not available after waiting");
+  }
+
+  auto goal_msg = FollowJointTrajectory::Goal();
+
+  goal_msg.trajectory.joint_names.push_back(pan_joint_name_);
+  goal_msg.trajectory.joint_names.push_back(tilt_joint_name_);
+
+  goal_msg.trajectory.points.resize(1);
+  goal_msg.trajectory.points[0].positions.resize(2);
+  goal_msg.trajectory.points[0].velocities.resize(2);
+  goal_msg.trajectory.points[0].accelerations.resize(2);
+  goal_msg.trajectory.joint_names.resize(2);
+  goal_msg.trajectory.points[0].time_from_start = rclcpp::Duration(0ms);
+
+  goal_msg.trajectory.points[0].positions[0] = pan;
+  goal_msg.trajectory.points[0].positions[1] = tilt;
+
+  auto send_goal_options = rclcpp_action::Client<FollowJointTrajectory>::SendGoalOptions();
+
+  send_goal_options.goal_response_callback =
+    std::bind(&HeadController::joint_trajectory_response_callback, this,
+    std::placeholders::_1);
+  send_goal_options.feedback_callback =
+    std::bind(&HeadController::joint_trajectory_feedback_callback, this,
+    std::placeholders::_1, std::placeholders::_2);
+  send_goal_options.result_callback =
+    std::bind(&HeadController::joint_trajectory_result_callback, this,
+    std::placeholders::_1);
+
+  follow_joint_trajectory_client_->async_send_goal(goal_msg, send_goal_options);
+
+}
+
+void
 HeadController::control_cycle()
 {
   RCLCPP_DEBUG(get_logger(), "Control cycle");
@@ -127,42 +206,29 @@ HeadController::control_cycle()
     return;
   }
 
-  trajectory_msgs::msg::JointTrajectory command_msg;
   error_msgs::msg::PanTiltError error_msg;
   double current_pan, current_tilt;
 
-  command_msg.points.resize(1);
-  command_msg.points[0].positions.resize(2);
-  command_msg.points[0].velocities.resize(2);
-  command_msg.points[0].accelerations.resize(2);
-  command_msg.joint_names.resize(2);
-  command_msg.points[0].time_from_start = rclcpp::Duration(0ms);
-
   for (size_t i = 0; i < last_state_->name.size(); i++) {
     if (last_state_->name[i] == pan_joint_name_) {
-      command_msg.joint_names[0] = pan_joint_name_;
       current_pan = last_state_->position[i];
     } else if (last_state_->name[i] == tilt_joint_name_) {
-      command_msg.joint_names[1] = tilt_joint_name_;
       current_tilt = last_state_->position[i];
     }
   }
 
   double command_pan = pan_pid_.get_output(object_x_angle_);
   double command_tilt = tilt_pid_.get_output(object_y_angle_);
+  command_pan = object_x_angle_;
+  command_tilt = object_y_angle_;
 
-  RCLCPP_INFO(get_logger(), "* COMMAND: [%.2f, %.2f]", command_pan, command_tilt);
+  RCLCPP_INFO(get_logger(), "* COMMAND: [%.2f, %.2f]", current_pan - command_pan,
+      current_tilt - command_tilt);
 
-  command_msg.points[0].positions[0] = std::clamp(-command_pan, -pan_limit_,
-      pan_limit_);
-  command_msg.points[0].positions[1] = std::clamp(-command_tilt, -tilt_limit_,
-      tilt_limit_);
+  send_joint_trajectory_goal(current_pan - command_pan, current_tilt - command_tilt);
 
-  command_msg.header.stamp = now();
-  joint_pub_->publish(command_msg);
-
-  double pan_error = object_x_angle_ - current_pan;
-  double tilt_error = object_y_angle_ - current_tilt;
+  double pan_error = abs(object_x_angle_);
+  double tilt_error = abs(object_y_angle_);
 
   error_msg.header.stamp = now();
   error_msg.pan_error = pan_error;

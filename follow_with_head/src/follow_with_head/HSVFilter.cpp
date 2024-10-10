@@ -64,6 +64,8 @@ HSVFilter::self_config()
   cv::setTrackbarPos("High S", "Filtered Image", S_);
   cv::createTrackbar("Low V", "Filtered Image", nullptr, 255, 0);
   cv::setTrackbarPos("Low V", "Filtered Image", v_);
+  cv::createTrackbar("High V", "Filtered Image", nullptr, 255, 0);
+  cv::setTrackbarPos("High V", "Filtered Image", V_);
 }
 
 void
@@ -83,6 +85,12 @@ HSVFilter::image_callback(const sensor_msgs::msg::Image::ConstSharedPtr & msg)
   cv::cvtColor(cv_ptr->image, img_hsv, cv::COLOR_BGR2HSV);
 
   cv::Mat1b filtered;
+  h_ = cv::getTrackbarPos("Low H", "Filtered Image");
+  s_ = cv::getTrackbarPos("Low S", "Filtered Image");
+  v_ = cv::getTrackbarPos("Low V", "Filtered Image");
+  H_ = cv::getTrackbarPos("High H", "Filtered Image");
+  S_ = cv::getTrackbarPos("High S", "Filtered Image");
+  V_ = cv::getTrackbarPos("High V", "Filtered Image");
   cv::inRange(img_hsv, cv::Scalar(h_, s_, v_), cv::Scalar(H_, S_, V_), filtered);
 
   cv_bridge::CvImage out_image;

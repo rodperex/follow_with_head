@@ -25,6 +25,8 @@
 #include "vision_msgs/msg/detection3_d_array.hpp"
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include "error_msgs/msg/pan_tilt_error.hpp"
+#include "rclcpp_action/rclcpp_action.hpp"
+#include "control_msgs/action/follow_joint_trajectory.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -47,6 +49,20 @@ private:
   rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr joint_pub_;
   rclcpp::Publisher<error_msgs::msg::PanTiltError>::SharedPtr error_pub_;
   void self_config();
+  void send_joint_trajectory_goal(double pan, double tilt);
+  void joint_trajectory_response_callback(
+    rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::SharedPtr
+    goal_handle);
+  void joint_trajectory_feedback_callback(
+    rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::SharedPtr
+    goal_handle,
+    const std::shared_ptr<const control_msgs::action::FollowJointTrajectory::Feedback> feedback);
+  void joint_trajectory_result_callback(
+    const rclcpp_action::ClientGoalHandle<control_msgs::action::FollowJointTrajectory>::
+    WrappedResult & result);
+
+  using FollowJointTrajectory = control_msgs::action::FollowJointTrajectory;
+  rclcpp_action::Client<FollowJointTrajectory>::SharedPtr follow_joint_trajectory_client_;
 
   rclcpp::TimerBase::SharedPtr timer_;
 

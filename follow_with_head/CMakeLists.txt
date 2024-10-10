@@ -19,6 +19,7 @@ find_package(depth_image_proc REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(error_msgs REQUIRED)
 
+find_package(rclcpp_action REQUIRED)
 find_package(rclcpp REQUIRED)
 
 
@@ -34,6 +35,7 @@ set(dependencies
   depth_image_proc
   sensor_msgs
   error_msgs
+  rclcpp_action
   rclcpp
   )
 
