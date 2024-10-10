@@ -118,10 +118,9 @@ HeadController::object_detection_callback(vision_msgs::msg::Detection3DArray::Un
   }
   object_pan_angle_ = atan2(object_pose_head.pose.position.y, object_pose_head.pose.position.x);
 
-  RCLCPP_INFO(get_logger(), "OBJECT (pan joint):  (%.2f, %.2f, %.2f) - [%.2f, %.2f]",
+  RCLCPP_INFO(get_logger(), "OBJECT (pan joint):  (%.2f, %.2f, %.2f) - %.2f rad",
       object_pose_head.pose.position.x,
-      object_pose_head.pose.position.y, object_pose_head.pose.position.z,
-      object_pan_angle_, object_tilt_angle_);
+      object_pose_head.pose.position.y, object_pose_head.pose.position.z, object_pan_angle_);
 
   try {
     tf2::doTransform(object_pose_camera, object_pose_head,
@@ -132,10 +131,9 @@ HeadController::object_detection_callback(vision_msgs::msg::Detection3DArray::Un
   }
   object_tilt_angle_ = atan2(object_pose_head.pose.position.y, object_pose_head.pose.position.x);
 
-  RCLCPP_INFO(get_logger(), "OBJECT (tilt joint):  (%.2f, %.2f, %.2f) - [%.2f, %.2f]",
+  RCLCPP_INFO(get_logger(), "OBJECT (tilt joint):  (%.2f, %.2f, %.2f) - %.2f rad",
       object_pose_head.pose.position.x,
-      object_pose_head.pose.position.y, object_pose_head.pose.position.z,
-      object_pan_angle_, object_tilt_angle_);
+      object_pose_head.pose.position.y, object_pose_head.pose.position.z, object_tilt_angle_);
 
   object_detected_ = true;
 }
@@ -254,13 +252,12 @@ HeadController::control_cycle()
 
   // double command_pan = pan_pid_.get_output(object_x_angle_);
   // double command_tilt = tilt_pid_.get_output(object_y_angle_);
-  double command_pan = object_pan_angle_;
-  double command_tilt = object_tilt_angle_;
+  double command_pan = std::clamp(object_pan_angle_ + current_pan, -pan_limit_, pan_limit_);
+  double command_tilt = std::clamp(object_tilt_angle_ + current_tilt, -tilt_limit_, tilt_limit_);
 
-  RCLCPP_INFO(get_logger(), "* COMMAND: [%.2f, %.2f]", current_pan + command_pan,
-      current_tilt + command_tilt);
+  RCLCPP_INFO(get_logger(), "* COMMAND: [%.2f, %.2f]", command_pan, command_tilt);
 
-  send_joint_trajectory_goal(current_pan + command_pan, current_tilt + command_tilt);
+  send_joint_trajectory_goal(command_pan, command_tilt);
 
   double pan_error = abs(object_pan_angle_);
   double tilt_error = abs(object_tilt_angle_);
