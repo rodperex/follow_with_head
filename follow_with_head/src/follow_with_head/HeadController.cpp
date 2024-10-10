@@ -219,8 +219,8 @@ HeadController::control_cycle()
 
   // double command_pan = pan_pid_.get_output(object_x_angle_);
   // double command_tilt = tilt_pid_.get_output(object_y_angle_);
-  command_pan = object_x_angle_;
-  command_tilt = object_y_angle_;
+  double command_pan = object_x_angle_;
+  double command_tilt = object_y_angle_;
 
   RCLCPP_INFO(get_logger(), "* COMMAND: [%.2f, %.2f]", current_pan - command_pan,
       current_tilt - command_tilt);
