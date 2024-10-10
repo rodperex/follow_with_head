@@ -23,6 +23,8 @@ using std::placeholders::_1;
 
 HeadController::HeadController(const rclcpp::NodeOptions & options)
 : Node("follow_controller", options),
+  tf_buffer_(),
+  tf_listener_(tf_buffer_),
   pan_pid_params_{0.0, 1.0, 0.0, 0.3},
   tilt_pid_params_{0.0, 1.0, 0.0, 0.3},
   pan_limit_(1.3),
@@ -49,6 +51,9 @@ HeadController::self_config()
   declare_parameter("tilt_pid_max_ref", tilt_pid_params_[1]);
   declare_parameter("tilt_pid_min_output", tilt_pid_params_[2]);
   declare_parameter("tilt_pid_max_output", tilt_pid_params_[3]);
+  declare_parameter("pan_joint_frame", pan_frame_id_);
+  declare_parameter("tilt_joint_frame", tilt_frame_id_);
+  declare_parameter("camera_optical_frame", camera_optical_frame_id_);
 
   get_parameter("pan_joint_name", pan_joint_name_);
   get_parameter("tilt_joint_name", tilt_joint_name_);
@@ -64,6 +69,9 @@ HeadController::self_config()
   get_parameter("tilt_pid_max_ref", tilt_pid_params_[1]);
   get_parameter("tilt_pid_min_output", tilt_pid_params_[2]);
   get_parameter("tilt_pid_max_output", tilt_pid_params_[3]);
+  get_parameter("camera_optical_frame", camera_optical_frame_id_);
+  get_parameter("pan_joint_frame", pan_frame_id_);
+  get_parameter("tilt_joint_frame", tilt_frame_id_);
 
   pan_pid_.set_pid(pan_pid_params_[0], pan_pid_params_[1], pan_pid_params_[2], pan_pid_params_[3]);
   tilt_pid_.set_pid(tilt_pid_params_[0], tilt_pid_params_[1], tilt_pid_params_[2],
@@ -91,17 +99,41 @@ HeadController::self_config()
 void
 HeadController::object_detection_callback(vision_msgs::msg::Detection3DArray::UniquePtr msg)
 {
-  object_x_angle_ = atan2(msg->detections[0].bbox.center.position.x,
-      msg->detections[0].bbox.center.position.z);
-  object_y_angle_ = atan2(msg->detections[0].bbox.center.position.y,
-      msg->detections[0].bbox.center.position.z);
+  geometry_msgs::msg::PoseStamped object_pose_camera, object_pose_head;
 
-  RCLCPP_INFO(get_logger(), "OBJECT:  (%.2f, %.2f, %.2f) - [%.2f, %.2f]",
-      msg->detections[0].bbox.center.position.x,
-      msg->detections[0].bbox.center.position.y, msg->detections[0].bbox.center.position.z,
-      object_x_angle_, object_y_angle_);
+  object_pose_camera.header.frame_id = camera_optical_frame_id_;
+  object_pose_camera.pose.position.x = msg->detections[0].bbox.center.position.x;
+  object_pose_camera.pose.position.y = msg->detections[0].bbox.center.position.y;
+  object_pose_camera.pose.position.z = msg->detections[0].bbox.center.position.z;
 
-  last_detection_time_ = msg.get()->header.stamp;
+  try {
+    tf2::doTransform(object_pose_camera, object_pose_head,
+      tf_buffer_.lookupTransform(pan_frame_id_, camera_optical_frame_id_, tf2::TimePointZero));
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_WARN(get_logger(), "Could not transform camera_link to head_link: %s", ex.what());
+    return;
+  }
+  object_pan_angle_ = atan2(object_pose_head.pose.position.y, object_pose_head.pose.position.x);
+
+  RCLCPP_INFO(get_logger(), "OBJECT (pan joint):  (%.2f, %.2f, %.2f) - [%.2f, %.2f]",
+      object_pose_head.pose.position.x,
+      object_pose_head.pose.position.y, object_pose_head.pose.position.z,
+      object_pan_angle_, object_tilt_angle_);
+
+  try {
+    tf2::doTransform(object_pose_camera, object_pose_head,
+      tf_buffer_.lookupTransform(tilt_frame_id_, camera_optical_frame_id_, tf2::TimePointZero));
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_WARN(get_logger(), "Could not transform camera_link to head_link: %s", ex.what());
+    return;
+  }
+  object_tilt_angle_ = atan2(object_pose_head.pose.position.y, object_pose_head.pose.position.x);
+
+  RCLCPP_INFO(get_logger(), "OBJECT (tilt joint):  (%.2f, %.2f, %.2f) - [%.2f, %.2f]",
+      object_pose_head.pose.position.x,
+      object_pose_head.pose.position.y, object_pose_head.pose.position.z,
+      object_pan_angle_, object_tilt_angle_);
+
   object_detected_ = true;
 }
 
@@ -219,16 +251,16 @@ HeadController::control_cycle()
 
   // double command_pan = pan_pid_.get_output(object_x_angle_);
   // double command_tilt = tilt_pid_.get_output(object_y_angle_);
-  double command_pan = object_x_angle_;
-  double command_tilt = object_y_angle_;
+  double command_pan = object_pan_angle_;
+  double command_tilt = object_tilt_angle_;
 
-  RCLCPP_INFO(get_logger(), "* COMMAND: [%.2f, %.2f]", current_pan - command_pan,
-      current_tilt - command_tilt);
+  RCLCPP_INFO(get_logger(), "* COMMAND: [%.2f, %.2f]", current_pan + command_pan,
+      current_tilt + command_tilt);
 
-  send_joint_trajectory_goal(current_pan - command_pan, current_tilt - command_tilt);
+  send_joint_trajectory_goal(current_pan + command_pan, current_tilt + command_tilt);
 
-  double pan_error = abs(object_x_angle_);
-  double tilt_error = abs(object_y_angle_);
+  double pan_error = abs(object_pan_angle_);
+  double tilt_error = abs(object_tilt_angle_);
 
   error_msg.header.stamp = now();
   error_msg.pan_error = pan_error;

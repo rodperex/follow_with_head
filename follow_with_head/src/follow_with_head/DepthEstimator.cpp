@@ -63,7 +63,7 @@ DepthEstimator::callback_info(sensor_msgs::msg::CameraInfo::UniquePtr msg)
 
 void DepthEstimator::imageCallback(sensor_msgs::msg::Image::UniquePtr msg)
 {
-  last_image_ = std::move(msg);;
+  last_image_ = std::move(msg);
 }
 
 void DepthEstimator::detectionCallback(vision_msgs::msg::Detection2DArray::UniquePtr msg)
@@ -71,8 +71,9 @@ void DepthEstimator::detectionCallback(vision_msgs::msg::Detection2DArray::Uniqu
   last_detection_ = std::move(msg);
 }
 
-void DepthEstimator::timerCallback(){
-  
+void DepthEstimator::timerCallback()
+{
+
   if (model_ == nullptr) {
     RCLCPP_WARN(get_logger(), "Camera Model not yet available");
     return;

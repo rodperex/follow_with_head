@@ -27,6 +27,11 @@
 #include "error_msgs/msg/pan_tilt_error.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "control_msgs/action/follow_joint_trajectory.hpp"
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -72,16 +77,19 @@ private:
 
   PID pan_pid_, tilt_pid_;
 
-  double object_x_angle_, object_y_angle_;
+  double object_pan_angle_, object_tilt_angle_;
 
   double pan_limit_, tilt_limit_; // radians
 
   std::string pan_joint_name_, tilt_joint_name_;
+  std::string camera_optical_frame_id_, pan_frame_id_, tilt_frame_id_;
 
   rclcpp::Time last_detection_time_;
 
   bool object_detected_;
 
+  tf2::BufferCore tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
 };
 
 }  // namespace follow_with_head

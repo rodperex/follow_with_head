@@ -18,6 +18,9 @@ find_package(image_geometry REQUIRED)
 find_package(depth_image_proc REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(error_msgs REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 find_package(rclcpp_action REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -35,6 +38,9 @@ set(dependencies
   depth_image_proc
   sensor_msgs
   error_msgs
+  tf2_geometry_msgs
+  tf2
+  tf2_ros
   rclcpp_action
   rclcpp
   )
